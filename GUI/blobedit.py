@@ -10,7 +10,7 @@ import io
 import PySimpleGUI as sg
 
 
-def mkGreetLayout():
+def homeLayout():
     left_col = [
         [sg.Text("DRAWBUDDY")],
         [sg.Button('Host')],
@@ -27,7 +27,7 @@ def mkGreetLayout():
 
     return layout
 
-def mkSignupLayout():
+def hostLayout():
     left_col = [
         [sg.Text('Please Enter Your Name')],
         [sg.Input(key = '-NEWNAME-')],
@@ -46,45 +46,18 @@ def mkSignupLayout():
 
     return layout
 
-def mkLoginLayout():
+def attendeeLayout():
     return [[]]
 
-LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-')],
-            [sg.Column(mkSignupLayout(), key = '-SIGNUP-', visible = False)],
-            [sg.Column(mkLoginLayout(), key = '-LOGIN-', visible = False)]]
+def whiteboardLayout():
+    return [[]]
 
-#### BEGIN: code from previous file #### 
+LAYOUTS = [[sg.Column(homeLayout(), key = '-HOME-')],
+            [sg.Column(hostLayout(), key = '-HOST-', visible = False)],
+            [sg.Column(attendeeLayout(), key = '-ATTENDEE-', visible = False)],
+            [sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = False)]
+           ]
 
-def get_diff(i1, i2): 
-
-    face_embeddings_i2 = np.array(face_recognition.face_encodings(i2))
-    face_embeddings_i1 = np.array(face_recognition.face_encodings(i1))
-
-    return sum(sum(abs(face_embeddings_i2 - face_embeddings_i1)))
-
-
-def compute_diff_scores(i1, i2): # params: full frame (a_face), crop(a_face_only)
-    scores = []
-    filenames = []
-
-    users = os.listdir('./saved_faces')
-
-    k = 0
-    while (k < len(users)):
-        file = users[k]
-        if (file.endswith('.png')):
-            if (file.endswith('_pp.png')):
-                name = file[:file.index('_pp.png')]
-                if mode == 'debug': print('comparing with ' + name)
-                filenames.append(name)
-                i3 = cv2.imread('./saved_faces/'+name+'_pp.png')
-                diff = get_diff(i3, i2)
-                scores.append(diff)
-        k = k + 1
-
-    return scores, filenames
-
-#### END: code from previous file #### 
 
 # takes frame and returns bytes of frame compatible with cv
 def get_bytes(frame):
@@ -105,7 +78,9 @@ def resize_image(frame):
 
 
 def mainlooprun():
-    window = sg.Window('Login App',LAYOUTS)
+    window = sg.Window('Drawbuddy', LAYOUTS, background_color='#57B5EE',
+                       resizable=True)
+
     cap = cv2.VideoCapture(0)
     #faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     iterations = 0
@@ -121,9 +96,9 @@ def mainlooprun():
         #if event == 'Submit':
             
 
-        if event == 'Returning User': # Returning User
-             window['-GREET-'].update(visible = False)
-             window['-LOGIN-'].update(visible = True)
+        if event == 'Host': # Returning User
+             window['-HOME-'].update(visible = False)
+             window['-HOST-'].update(visible = True)
 
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
