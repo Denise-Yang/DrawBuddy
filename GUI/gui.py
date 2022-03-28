@@ -7,7 +7,6 @@ from PIL import Image
 import io
 import PySimpleGUI as sg
 import random
-import pyautogui as ag
 
 
 def mkGreetLayout():
@@ -79,6 +78,9 @@ def get_bytes(frame):
 def convertToImage(frame):
     return cv2.imencode('.png', frame)
 
+def saveImage(frame):
+    cv2.imwrite("frame.jpg", frame)
+    
 def cv2pil(cv):
         colorconv_cv = cv2.cvtColor(cv, cv2.COLOR_BGR2RGB)
         return Image.fromarray(colorconv_cv)
@@ -134,8 +136,8 @@ def mainlooprun():
         if event == "Vectorize Image":
             vectorize_image = True
             image_to_vectorize = frame
-            img = convertToImage(frame)
-            print(type(img))
+            saveImage(frame)
+            #print(type(img))
             
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
