@@ -7,6 +7,7 @@ from PIL import Image
 import io
 import PySimpleGUI as sg
 import random
+import pyautogui as ag
 
 
 def mkGreetLayout():
@@ -78,8 +79,13 @@ def get_bytes(frame):
 def convertToImage(frame):
     return cv2.imencode('.png', frame)
 
-def saveImage(frame):
-    cv2.imwrite("frame.jpg", frame)
+
+def saveImage(frame, file_name):
+    current_dir = os.getcwd()
+    path = current_dir[:-3] + "vectorization/images"
+    cv2.imwrite(os.path.join(path , file_name+'.jpg'), frame)
+    return file_name+'.jpg'
+   
     
 def cv2pil(cv):
         colorconv_cv = cv2.cvtColor(cv, cv2.COLOR_BGR2RGB)
@@ -98,6 +104,17 @@ def resize_image_home_page(frame):
     framePIL = cv2pil(frame)
     framePIL = framePIL.resize((300,200))
     return pil2cv(framePIL)
+
+def vectorize(frame, file_name):
+    path =  os.getcwd()
+    base_path =path[:-3] + "vectorization/images"
+    base_path1 =path[:-3] + "vectorization/results"
+    input_path = os.path.join(base_path , file_name +'.jpg')
+    output_path = os.path.join(base_path1 , file_name+'.svg')
+    cv2.imwrite(input_path, frame)
+    convert = os.system("vtracer --input " + input_path + " --output " + output_path)
+
+
 
 
 def mainlooprun():
@@ -136,7 +153,8 @@ def mainlooprun():
         if event == "Vectorize Image":
             vectorize_image = True
             image_to_vectorize = frame
-            saveImage(frame)
+            file_name =  'frame'
+            vectorize(frame, file_name)
             #print(type(img))
             
         if event == sg.WIN_CLOSED or event == 'Exit1':
