@@ -8,6 +8,35 @@ import io
 import PySimpleGUI as sg
 import random
 import pyautogui as ag
+import subprocess
+
+import time
+import base64
+import socket
+import threading
+from queue import Queue
+
+myID = ""
+userList = []
+PORT = random.randint(3456, 59897)
+def start_serv():
+    os.system("python3 Server.py " + str(PORT))
+
+HOST = "" # put your IP address here if playing on multiple computers
+
+def handleServerMsg(server, serverMsg):
+    server.setblocking(1)
+    msg = ""
+    command = ""
+    while True:
+        msg += server.recv(10).decode("UTF-8")
+        command = msg.split("\n")
+        while (len(command) > 1):
+            readyMsg = command[0]
+            msg = "\n".join(command[1:])
+            serverMsg.put(readyMsg)
+            command = msg.split("\n")
+
 
 
 def mkGreetLayout():
@@ -24,19 +53,19 @@ def mkGreetLayout():
     
 
 def mkHostLayout():
-    code = random.randint(3456, 59897)
+    code = PORT
     if len(str(code)) == 4:
         code = "0" + str(code)
     left_col = [
         [sg.Text("Here is Your Access Code")],
-        [sg.Text(code), sg.Button('Start')],
-        [sg.Text("Joined Users")],
-        [sg.Text("NOT IMPLEMENTED")]
+        [sg.Text(code), sg.Button('Start')]
     ]
     
     layout = [[sg.Column(left_col)]]
 
     return layout
+    
+    
     
     
 def mkUserLayout():
@@ -50,7 +79,10 @@ def mkUserLayout():
     return layout
     
 def whiteboardLayout():
-    left_col = [[sg.Text("Whiteboard ")]]
+    global userList
+    left_col = [[sg.Text("Whiteboard ")],
+                [sg.Text(str(userList), key='-USERLIST-')]
+    ]
     
 
     camera_col = [[sg.Text("Camera Feed")],
@@ -112,12 +144,17 @@ def vectorize(frame, file_name):
     input_path = os.path.join(base_path , file_name +'.jpg')
     output_path = os.path.join(base_path1 , file_name+'.svg')
     cv2.imwrite(input_path, frame)
-    convert = os.system("vtracer --input " + input_path + " --output " + output_path)
+    convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
+
 
 
 
 
 def mainlooprun():
+    global PORT
+    global HOST
+    global myID
+    global userList
     window = sg.Window('Login App',LAYOUTS, size=sz, background_color='#57B5EE',
                        resizable=True, finalize=True)
     window.set_min_size(sz)
@@ -127,15 +164,30 @@ def mainlooprun():
     image_to_vectorize = None
     
     while True:
+        try:
+            while(serverMsg.qsize() > 0):
+                msg = serverMsg.get(False)
+                print("received: ", msg, "\n")
+                msg = msg.split("\t")
+                command = msg[0]
+                if command == 'myIDis':
+                    myID = msg[1]
+                    userList.append(myID)
+                if command == 'newUser':
+                    userList.append(msg[1])
+        except:
+            pass
         event, vals = window.read(timeout=10)
         if event != "__TIMEOUT__":
             print("event:", event)
         ret, frame = cap.read()
-        window.FindElement('-IMAGE_FEED-').Update(data = get_bytes(resize_image_home_page(frame)))
+        window['-IMAGE_FEED-'].Update(data = get_bytes(resize_image_home_page(frame)))
+        window['-USERLIST-'].Update(str(userList))
 
         if vectorize_image:
-            window.FindElement('-VECTORIZE_IMAGE-').Update(data = get_bytes(resize_image_signup(image_to_vectorize)))
-        
+            window['-VECTORIZE_IMAGE-'].Update(data = get_bytes(resize_image_signup(image_to_vectorize)))
+            vectorize_image = False
+
         if event == 'Create Session':
             window['-GREET-'].update(visible = False)
             window['-HOST-'].update(visible = True)
@@ -144,10 +196,23 @@ def mainlooprun():
             window['-GREET-'].update(visible = False)
             window['-USER-'].update(visible = True)
             
-        if event == 'Join' or event == 'Start':
-            window['-GREET-'].update(visible = False)
-            window['-HOST-'].update(visible = False)
+        if event == 'Join':
             window['-USER-'].update(visible = False)
+            PORT = vals['-PORTNUM-']
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.connect((HOST,PORT))
+            serverMsg = Queue(100)
+            threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
+            window['-WHITEBOARD-'].update(visible = True)
+
+        if event == 'Start':
+            threading.Thread(target=start_serv).start()
+            time.sleep(5)
+            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server.connect((HOST, PORT))
+            serverMsg = Queue(100)
+            threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
+            window['-HOST-'].update(visible = False)
             window['-WHITEBOARD-'].update(visible = True)
 
         if event == "Vectorize Image":
@@ -155,7 +220,6 @@ def mainlooprun():
             image_to_vectorize = frame
             file_name =  'frame'
             vectorize(frame, file_name)
-            #print(type(img))
             
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
