@@ -19,6 +19,7 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import io
 
+isHost = False
 myID = ""
 userList = dict()
 PORT = random.randint(3456, 59897)
@@ -70,7 +71,6 @@ def mkHostLayout():
 def get_names(users):
     res = ''
     for key in users:
-        print(users[key])
         res += str(users[key]) + '\n'
     return res[:-1] 
     
@@ -87,7 +87,6 @@ def mkUserLayout():
     
 def whiteboardLayout():
     global userList
-    global PORT
 
     code = "0" + str(PORT) if len(str(PORT)) == 4 else str(PORT)
 
@@ -105,7 +104,7 @@ def whiteboardLayout():
     ]
     
     camera_col = [[sg.Text("Camera Feed")],        
-        [sg.Text(code)],
+        [sg.Text(code, key='-PORT-')],
         [sg.Button('Receive')],
         [sg.Button('Send')],
         [sg.Button('Vectorize Image')],
@@ -168,6 +167,7 @@ def mainlooprun():
     global HOST
     global myID
     global userList
+    global isHost
     window = sg.Window('Login App',LAYOUTS, size=sz, background_color='#57B5EE',
                        resizable=True, finalize=True)
     window.set_min_size(sz)
@@ -203,9 +203,11 @@ def mainlooprun():
         if event != "__TIMEOUT__":
             print("event:", event)
 
+        code = vals['-PORTNUM-'] if not isHost else "0" + str(PORT) if len(str(PORT)) == 4 else str(PORT)
         ret, frame = cap.read()
         window['-IMAGE_FEED-'].update(data = get_bytes(resize_image_home_page(frame)))
         window['-USERLIST-'].update(get_names(userList))
+        window['-PORT-'].update(code)
 
         if vectorize_image:
             window['-VECTORIZE_IMAGE-'].update(data = get_bytes(resize_image_signup(image_to_vectorize)))
@@ -239,6 +241,7 @@ def mainlooprun():
             threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
             msg = 'dname\t' + vals['-DISNAME0-'] + '\n'
             server.send(msg.encode())
+            isHost = True
             window['-HOST-'].update(visible = False)
             window['-WHITEBOARD-'].update(visible = True)
 
