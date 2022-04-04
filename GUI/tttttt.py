@@ -9,18 +9,21 @@ import PySimpleGUI as sg
 import random
 import pyautogui as ag
 import subprocess
+
 import time
 import base64
 import socket
 import threading
 from queue import Queue
+
+import sys
 from svgutils.compose import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import io
 
 myID = ""
-userList = dict()
+userList = []
 PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
@@ -60,10 +63,8 @@ def mkHostLayout():
     if len(str(code)) == 4:
         code = "0" + str(code)
     left_col = [
-        [sg.Text("Here is Your Access Code", font=('Courier', 50))],
-        [sg.Text(code, font=('Courier', 40))],
-        [sg.Text("Enter Your Display Name:", font=('Courier', 40)), sg.InputText(key='-DISNAME0-', font=('Courier', 40))],
-        [sg.Button('Back', font=('Courier', 40)), sg.Button('Start', font=('Courier', 40))]
+        [sg.Text("Here is Your Access Code")],
+        [sg.Text(code), sg.Button('Start')]
     ]
     
     layout = [[sg.Column(left_col)]]
@@ -75,10 +76,9 @@ def mkHostLayout():
     
 def mkUserLayout():
     left_col = [
-        [sg.Text("Enter the Access Code", font=('Courier', 50))],
-        [sg.InputText(key='-PORTNUM-', font=('Courier', 40))],
-        [sg.Text("Enter Your Display Name:", font=('Courier', 40)), sg.InputText(key='-DISNAME1-', font=('Courier', 40))],
-        [sg.Button("Join", font=('Courier', 40)), sg.Button('Back', font=('Courier', 40))]
+        [sg.Text("Enter the Access Code")],
+        [sg.InputText()],
+        [sg.Button("Join")]
     ]
     layout = [[sg.Column(left_col)]]
 
@@ -161,10 +161,6 @@ def vectorize(frame, file_name):
     cv2.imwrite(input_path, frame)
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
-
-
-
-
 def mainlooprun():
     global PORT
     global HOST
@@ -179,7 +175,6 @@ def mainlooprun():
     image_to_vectorize = None
     
     while True:
-        event, vals = window.read(timeout=10)
         try:
             while(serverMsg.qsize() > 0):
                 msg = serverMsg.get(False)
@@ -188,19 +183,12 @@ def mainlooprun():
                 command = msg[0]
                 if command == 'myIDis':
                     myID = msg[1]
-                    i = 2
-                    try:
-                        while True:
-                            userList[msg[i]] = msg[i+1]
-                            i += 2
-                    except:
-                        userList[myID] = vals['-DISNAME0-'] if myID == 'user1' else vals['-DISNAME1-']
+                    userList.append(myID)
                 if command == 'newUser':
-                    userList[msg[1]] = 0
-                if command == 'dname':
-                    userList[msg[1]] = msg[2]
+                    userList.append(msg[1])
         except:
             pass
+        event, vals = window.read(timeout=10)
         if event != "__TIMEOUT__":
             print("event:", event)
         ret, frame = cap.read()
@@ -221,13 +209,11 @@ def mainlooprun():
             
         if event == 'Join':
             window['-USER-'].update(visible = False)
-            PORT = int(vals['-PORTNUM-'])
+            PORT = vals['-PORTNUM-']
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.connect((HOST,PORT))
             serverMsg = Queue(100)
             threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
-            msg = 'dname\t' + vals['-DISNAME1-'] + '\n'
-            server.send(msg.encode())
             window['-WHITEBOARD-'].update(visible = True)
 
         if event == 'Start':
@@ -237,8 +223,6 @@ def mainlooprun():
             server.connect((HOST, PORT))
             serverMsg = Queue(100)
             threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
-            msg = 'dname\t' + vals['-DISNAME0-'] + '\n'
-            server.send(msg.encode())
             window['-HOST-'].update(visible = False)
             window['-WHITEBOARD-'].update(visible = True)
 
@@ -262,17 +246,12 @@ def mainlooprun():
             window['-IMAGE-'].update(data=bio.getvalue())
             #svgFile = svgutils.transform.fromfile("line.svg")
             #svgFile.find
-
+            
             # with open('line.svg') as svgFile:
             #     for svgStr in svgFile:
             #         if "line" in svgStr:
             #             print(svgStr)
                         # x1, y1, x2, y2 = getPointsFromLine(svgStr)
-            
-        if event == 'Back' or event == 'Back0':
-            window['-USER-'].update(visible = False)
-            window['-HOST-'].update(visible = False)
-            window['-GREET-'].update(visible = True)
             
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
