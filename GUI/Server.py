@@ -5,7 +5,7 @@ from queue import Queue
 import sys
 PORT = int(sys.argv[1])
 
-HOST = "" # put your IP address here if playing on multiple computers
+HOST = "172.26.93.96" # put your IP address here if playing on multiple computers
 BACKLOG = 2
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 server.bind((HOST,PORT))
@@ -18,12 +18,9 @@ def handleClient(client, serverChannel, cID, clientele):
       try:
         msg += client.recv(30).decode("UTF-8")
         command = msg.split("\t")
-        print(command)
         while (len(command) > 1):
           readyMsg = command[0]
           msg = "\t".join(command[1:])
-          print(readyMsg)
-          print(msg)
           serverChannel.put(str(cID) + "\t" + readyMsg + '\t' + msg)
           command = msg.split("\t")
       except:

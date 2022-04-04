@@ -19,19 +19,13 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import io
 
-import sys
-from svgutils.compose import *
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPM
-import io
-
 myID = ""
 userList = dict()
 PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "" # put your IP address here if playing on multiple computers
+HOST = "172.26.93.96" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -46,8 +40,6 @@ def handleServerMsg(server, serverMsg):
             serverMsg.put(readyMsg)
             command = msg.split("\n")
 
-
-
 def mkGreetLayout():
     height, width = ag.size()
     button_font = ('Courier', 60)
@@ -58,8 +50,7 @@ def mkGreetLayout():
     ]
     layout = [[sg.Column(center_col)]]
 
-    return layout
-    
+    return layout 
 
 def mkHostLayout():
     code = PORT
@@ -76,8 +67,11 @@ def mkHostLayout():
 
     return layout
     
-    
-    
+def get_names(users):
+    res = ''
+    for key in users:
+        res += users[key] + '\n'
+    return res[:-1] 
     
 def mkUserLayout():
     left_col = [
@@ -93,7 +87,7 @@ def mkUserLayout():
 def whiteboardLayout():
     global userList
     left_col = [[sg.Text("Whiteboard ")],
-                [sg.Text(str(userList), key='-USERLIST-')],
+                [sg.Text(get_names(userList), key='-USERLIST-')],
                 [sg.Image(key="-IMAGE-")],
                 [sg.Graph(
                 canvas_size=(550, 675),
@@ -105,7 +99,6 @@ def whiteboardLayout():
                 drag_submits=True)]
     ]
     
-
     camera_col = [[sg.Text("Camera Feed")],
         [sg.Button('Receive')],
         [sg.Button('Send')],
@@ -124,7 +117,6 @@ LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-'),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
             sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = False, background_color = 'white')]]
 
-
 # takes frame and returns bytes of frame compatible with cv
 def get_bytes(frame):
     return cv2.imencode('.png', frame)[1].tobytes()
@@ -132,17 +124,15 @@ def get_bytes(frame):
 def convertToImage(frame):
     return cv2.imencode('.png', frame)
 
-
 def saveImage(frame, file_name):
     current_dir = os.getcwd()
     path = current_dir[:-3] + "vectorization/images"
     cv2.imwrite(os.path.join(path , file_name+'.jpg'), frame)
     return file_name+'.jpg'
    
-    
 def cv2pil(cv):
-        colorconv_cv = cv2.cvtColor(cv, cv2.COLOR_BGR2RGB)
-        return IMG.fromarray(colorconv_cv)
+    colorconv_cv = cv2.cvtColor(cv, cv2.COLOR_BGR2RGB)
+    return IMG.fromarray(colorconv_cv)
 
 def pil2cv(pil):
     cv2im = np.array(pil)
@@ -203,14 +193,16 @@ def mainlooprun():
                     userList[msg[1]] = msg[2]
         except:
             pass
+
         if event != "__TIMEOUT__":
             print("event:", event)
+
         ret, frame = cap.read()
-        window['-IMAGE_FEED-'].Update(data = get_bytes(resize_image_home_page(frame)))
-        window['-USERLIST-'].Update(str(userList))
+        window['-IMAGE_FEED-'].update(data = get_bytes(resize_image_home_page(frame)))
+        window['-USERLIST-'].update(get_names(userList))
 
         if vectorize_image:
-            window['-VECTORIZE_IMAGE-'].Update(data = get_bytes(resize_image_signup(image_to_vectorize)))
+            window['-VECTORIZE_IMAGE-'].update(data = get_bytes(resize_image_signup(image_to_vectorize)))
             vectorize_image = False
 
         if event == 'Create Session':
@@ -249,10 +241,6 @@ def mainlooprun():
             image_to_vectorize = frame
             file_name =  'frame'
             vectorize(frame, file_name)
-            # print(svgutils.compose.SVG('line.svg'))
-            
-            #fig2 = svg.fromfile('line.svg')
-            #fig2 = Figure("16cm", "6.5cm", SVG("line.svg"))
             base_path1 = os.getcwd()[:-3] + "vectorization/results"
             output_path = os.path.join(base_path1 , file_name+'.svg')
             drawing = svg2rlg(output_path)
@@ -262,13 +250,6 @@ def mainlooprun():
             bio = io.BytesIO()
             image.save(bio, format="PNG")
             window['-IMAGE-'].update(data=bio.getvalue())
-            #svgFile = svgutils.transform.fromfile("line.svg")
-            #svgFile.find
-            # with open('line.svg') as svgFile:
-            #     for svgStr in svgFile:
-            #         if "line" in svgStr:
-            #             print(svgStr)
-                        # x1, y1, x2, y2 = getPointsFromLine(svgStr)
             
         if event == 'Back' or event == 'Back0':
             window['-USER-'].update(visible = False)
