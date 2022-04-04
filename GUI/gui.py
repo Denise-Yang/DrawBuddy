@@ -19,6 +19,12 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import io
 
+import sys
+from svgutils.compose import *
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
+import io
+
 myID = ""
 userList = dict()
 PORT = random.randint(3456, 59897)
@@ -161,10 +167,6 @@ def vectorize(frame, file_name):
     cv2.imwrite(input_path, frame)
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
-
-
-
-
 def mainlooprun():
     global PORT
     global HOST
@@ -262,7 +264,6 @@ def mainlooprun():
             window['-IMAGE-'].update(data=bio.getvalue())
             #svgFile = svgutils.transform.fromfile("line.svg")
             #svgFile.find
-
             # with open('line.svg') as svgFile:
             #     for svgStr in svgFile:
             #         if "line" in svgStr:
