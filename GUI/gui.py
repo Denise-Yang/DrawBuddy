@@ -3,7 +3,7 @@ import numpy as np
 import os
 import sys
 import requests
-from PIL import Image
+from PIL import Image as IMG
 import io
 import PySimpleGUI as sg
 import random
@@ -15,6 +15,12 @@ import base64
 import socket
 import threading
 from queue import Queue
+
+import sys
+from svgutils.compose import *
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPM
+import io
 
 myID = ""
 userList = []
@@ -81,7 +87,16 @@ def mkUserLayout():
 def whiteboardLayout():
     global userList
     left_col = [[sg.Text("Whiteboard ")],
-                [sg.Text(str(userList), key='-USERLIST-')]
+                [sg.Text(str(userList), key='-USERLIST-')],
+                [sg.Image(key="-IMAGE-")],
+                [sg.Graph(
+                canvas_size=(550, 675),
+                graph_bottom_left=(0, 0),
+                graph_top_right=(550, 675),
+                key="-GRAPH-",
+                change_submits=True,  # mouse click events
+                background_color='lightblue',
+                drag_submits=True)]
     ]
     
 
@@ -92,7 +107,7 @@ def whiteboardLayout():
         [sg.Image(key="-IMAGE_FEED-")],
         [sg.Image(key="-VECTORIZE_IMAGE-")]]
     
-    layout = [[sg.Column(left_col, size = (550, 675), background_color = 'light blue'),
+    layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
                sg.Column(camera_col, size = (400, 600), background_color = 'white')]]
     
     return layout
@@ -121,7 +136,7 @@ def saveImage(frame, file_name):
     
 def cv2pil(cv):
         colorconv_cv = cv2.cvtColor(cv, cv2.COLOR_BGR2RGB)
-        return Image.fromarray(colorconv_cv)
+        return IMG.fromarray(colorconv_cv)
 
 def pil2cv(pil):
     cv2im = np.array(pil)
@@ -145,10 +160,6 @@ def vectorize(frame, file_name):
     output_path = os.path.join(base_path1 , file_name+'.svg')
     cv2.imwrite(input_path, frame)
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
-
-
-
-
 
 def mainlooprun():
     global PORT
@@ -220,6 +231,27 @@ def mainlooprun():
             image_to_vectorize = frame
             file_name =  'frame'
             vectorize(frame, file_name)
+            # print(svgutils.compose.SVG('line.svg'))
+            
+            #fig2 = svg.fromfile('line.svg')
+            #fig2 = Figure("16cm", "6.5cm", SVG("line.svg"))
+            base_path1 = os.getcwd()[:-3] + "vectorization/results"
+            output_path = os.path.join(base_path1 , file_name+'.svg')
+            drawing = svg2rlg(output_path)
+            renderPM.drawToFile(drawing, file_name + ".png", fmt="PNG")
+            image = IMG.open(file_name + ".png")
+            image.thumbnail((500, 500))
+            bio = io.BytesIO()
+            image.save(bio, format="PNG")
+            window['-IMAGE-'].update(data=bio.getvalue())
+            #svgFile = svgutils.transform.fromfile("line.svg")
+            #svgFile.find
+            
+            # with open('line.svg') as svgFile:
+            #     for svgStr in svgFile:
+            #         if "line" in svgStr:
+            #             print(svgStr)
+                        # x1, y1, x2, y2 = getPointsFromLine(svgStr)
             
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
