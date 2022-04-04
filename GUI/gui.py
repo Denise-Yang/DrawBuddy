@@ -70,7 +70,8 @@ def mkHostLayout():
 def get_names(users):
     res = ''
     for key in users:
-        res += users[key] + '\n'
+        print(users[key])
+        res += str(users[key]) + '\n'
     return res[:-1] 
     
 def mkUserLayout():
