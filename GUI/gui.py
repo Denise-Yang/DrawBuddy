@@ -70,7 +70,8 @@ def mkHostLayout():
 def get_names(users):
     res = ''
     for key in users:
-        res += users[key] + '\n'
+        print(users[key])
+        res += str(users[key]) + '\n'
     return res[:-1] 
     
 def mkUserLayout():
@@ -188,7 +189,7 @@ def mainlooprun():
                     except:
                         userList[myID] = vals['-DISNAME0-'] if myID == 'user1' else vals['-DISNAME1-']
                 if command == 'newUser':
-                    userList[msg[1]] = 0
+                    userList[msg[1]] = 'newUser'
                 if command == 'dname':
                     userList[msg[1]] = msg[2]
         except:
