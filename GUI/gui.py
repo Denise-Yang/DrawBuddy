@@ -86,6 +86,10 @@ def mkUserLayout():
     
 def whiteboardLayout():
     global userList
+    global PORT
+
+    code = "0" + str(PORT) if len(str(PORT)) == 4 else str(PORT)
+
     left_col = [[sg.Text("Whiteboard ")],
                 [sg.Text(get_names(userList), key='-USERLIST-')],
                 [sg.Image(key="-IMAGE-")],
@@ -99,7 +103,8 @@ def whiteboardLayout():
                 drag_submits=True)]
     ]
     
-    camera_col = [[sg.Text("Camera Feed")],
+    camera_col = [[sg.Text("Camera Feed")],        
+        [sg.Text(code)],
         [sg.Button('Receive')],
         [sg.Button('Send')],
         [sg.Button('Vectorize Image')],
@@ -188,7 +193,7 @@ def mainlooprun():
                     except:
                         userList[myID] = vals['-DISNAME0-'] if myID == 'user1' else vals['-DISNAME1-']
                 if command == 'newUser':
-                    userList[msg[1]] = 0
+                    userList[msg[1]] = 'newUser'
                 if command == 'dname':
                     userList[msg[1]] = msg[2]
         except:
