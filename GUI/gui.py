@@ -18,6 +18,8 @@ from svgutils.compose import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import io
+from svgParser import getData
+
 
 isHost = False
 myID = ""
@@ -117,10 +119,10 @@ def whiteboardLayout():
     return layout
 
 sz=(900,700)
-LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-'),
+LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = False),
             sg.Column(mkHostLayout(), key = '-HOST-', visible = False),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
-            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = False, background_color = 'white')]]
+            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = True, background_color = 'white')]]
 
 # takes frame and returns bytes of frame compatible with cv
 def get_bytes(frame):
@@ -255,6 +257,7 @@ def mainlooprun():
             drawing = svg2rlg(output_path)
             renderPM.drawToFile(drawing, file_name + ".png", fmt="PNG")
             image = IMG.open(file_name + ".png")
+            getData(output_path)
             image.thumbnail((500, 500))
             bio = io.BytesIO()
             image.save(bio, format="PNG")
