@@ -51,6 +51,7 @@ def getData(fileName):
                 startPath = svgStr[index:end]
                 #print(startPath)
 
+
                 coordinates = startPath.split("C")
                 for coord in coordinates:
                     point = coord.split(" ")
@@ -64,7 +65,7 @@ def getData(fileName):
      
                 #just do enpoints, could add additional chekcs to determine circle or non circle
                 points.append(pointsI[0])
-                points.append[pointsI[len(pointsI)-1]]
+                points.append(pointsI[len(pointsI)-1])
 
                 
                 #filter points
