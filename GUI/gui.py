@@ -17,14 +17,11 @@ from queue import Queue
 from svgutils.compose import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
-<<<<<<< HEAD
 import zlib
-=======
 import io
-from svgParser import getData
+from svgParser import parseSVG
 from filter import cropImage
 
->>>>>>> 418e305cd39628279de9254c5faa1be44d074cd4
 
 isHost = False
 myID = ""
@@ -34,7 +31,7 @@ PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "" # put your IP address here if playing on multiple computers
+HOST = "172.26.33.12" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -171,9 +168,10 @@ def vectorize(frame, file_name):
     base_path =path[:-3] + "vectorization/images"
     base_path1 =path[:-3] + "vectorization/results"
     input_path = os.path.join(base_path , file_name +'.jpg')
-    cropImage(input_path)
     output_path = os.path.join(base_path1 , file_name+'.svg')
-    cv2.imwrite(input_path, frame)
+    cv2.imwrite(input_path, frame)    
+    cropImage(input_path)
+
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
 def mainlooprun():
@@ -300,7 +298,7 @@ def mainlooprun():
 
             window['-IMAGE-'].update(data=bio.getvalue())
             
-            getData(output_path)
+            parseSVG(output_path)
             
         if event == 'Back' or event == 'Back0':
             window['-USER-'].update(visible = False)
