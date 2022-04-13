@@ -17,16 +17,17 @@ from queue import Queue
 from svgutils.compose import *
 from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
-import io
+import zlib
 
 isHost = False
 myID = ""
 userList = dict()
+vectors = 0
 PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "172.26.93.96" # put your IP address here if playing on multiple computers
+HOST = "" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -105,7 +106,12 @@ def whiteboardLayout():
     
     camera_col = [[sg.Text("Camera Feed")],        
         [sg.Text(code, key='-PORT-')],
-        [sg.Button('Receive')],
+        [sg.Button('Receive', key='-REC-'), 
+         sg.Text("Vectors in Inbox: %s" % str(vectors), text_color='white', 
+                 background_color='red', key='-MREC-', visible=False)],
+        [sg.InputText(key='-FILENAME-', visible=False), 
+         sg.Button('Submit', key='-SUB-', visible=False), 
+         sg.Button('Back', key='-USUB-', visible=False)],
         [sg.Button('Send')],
         [sg.Button('Vectorize Image')],
         [sg.Image(key="-IMAGE_FEED-")],
@@ -168,6 +174,8 @@ def mainlooprun():
     global myID
     global userList
     global isHost
+    global vectors
+    receivedSVG = []
     window = sg.Window('Login App',LAYOUTS, size=sz, background_color='#57B5EE',
                        resizable=True, finalize=True)
     window.set_min_size(sz)
@@ -178,10 +186,14 @@ def mainlooprun():
     
     while True:
         event, vals = window.read(timeout=10)
+        if (vectors == 0):
+            window['-MREC-'].update(visible=False)
+        else:
+            window['-MREC-'].update(visible=True)
         try:
             while(serverMsg.qsize() > 0):
                 msg = serverMsg.get(False)
-                print("received: ", msg, "\n")
+                print("received\n")
                 msg = msg.split("\t")
                 command = msg[0]
                 if command == 'myIDis':
@@ -197,6 +209,13 @@ def mainlooprun():
                     userList[msg[1]] = 'newUser'
                 if command == 'dname':
                     userList[msg[1]] = msg[2]
+                if command == 'send':
+                    svg = msg[2].encode()
+                    svg = base64.b64decode(msg[2])
+                    svg = zlib.decompress(svg)
+                    svg = svg.decode('UTF-8')
+                    receivedSVG.append(svg)
+                    vectors += 1
         except:
             pass
 
@@ -208,6 +227,7 @@ def mainlooprun():
         window['-IMAGE_FEED-'].update(data = get_bytes(resize_image_home_page(frame)))
         window['-USERLIST-'].update(get_names(userList))
         window['-PORT-'].update(code)
+        window['-MREC-'].update("Vectors in Inbox: %s" % str(vectors))
 
         if vectorize_image:
             window['-VECTORIZE_IMAGE-'].update(data = get_bytes(resize_image_signup(image_to_vectorize)))
@@ -232,13 +252,24 @@ def mainlooprun():
             server.send(msg.encode())
             window['-WHITEBOARD-'].update(visible = True)
 
+        if event == 'Send':
+            path = os.getcwd()[:-3] + "vectorization/results/frame.svg"
+            f = open(path, 'r').read()
+            compressed = f.encode()
+            compressed = zlib.compress(compressed)
+            compressed = base64.b64encode(compressed)
+            compressed = str(compressed, 'utf-8')
+            msg = 'send\t%s\n' % compressed
+            server.send(msg.encode())
+
         if event == 'Start':
             threading.Thread(target=start_serv).start()
-            time.sleep(5)
+            time.sleep(2)
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server.connect((HOST, PORT))
             serverMsg = Queue(100)
             threading.Thread(target = handleServerMsg, args = (server, serverMsg)).start()
+            myUsername = vals['-DISNAME0-']
             msg = 'dname\t' + vals['-DISNAME0-'] + '\n'
             server.send(msg.encode())
             isHost = True
@@ -264,7 +295,39 @@ def mainlooprun():
             window['-USER-'].update(visible = False)
             window['-HOST-'].update(visible = False)
             window['-GREET-'].update(visible = True)
+
+        if event == '-REC-':
+            window['-REC-'].update(visible=False)
+            window['-FILENAME-'].update(visible=True)
+            window['-SUB-'].update(visible=True)
+            window['-USUB-'].update(visible=True)
             
+        if event == '-SUB-':
+            window['-REC-'].update(visible=True)
+            window['-FILENAME-'].update(visible=False)
+            window['-SUB-'].update(visible=False)
+            window['-USUB-'].update(visible=False)
+            fname = vals['-FILENAME-']
+            svg = receivedSVG.pop()
+            path =  os.getcwd()[:-3]
+            path += 'vectorization/results/' + fname + '.svg'
+            savedSVG = open(path, 'w')
+            savedSVG.write(svg)
+            drawing = svg2rlg(path)
+            renderPM.drawToFile(drawing, fname + ".png", fmt="PNG")
+            image = IMG.open(fname + ".png")
+            image.thumbnail((500, 500))
+            bio = io.BytesIO()
+            image.save(bio, format="PNG")
+            window['-IMAGE-'].update(data=bio.getvalue())
+            vectors-=1
+
+        if event == '-USUB-':
+            window['-REC-'].update(visible=True)
+            window['-FILENAME-'].update(visible=False)
+            window['-SUB-'].update(visible=False)
+            window['-USUB-'].update(visible=False)
+
         if event == sg.WIN_CLOSED or event == 'Exit1':
             break
 

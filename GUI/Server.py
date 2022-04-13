@@ -5,7 +5,7 @@ from queue import Queue
 import sys
 PORT = int(sys.argv[1])
 
-HOST = "172.26.93.96" # put your IP address here if playing on multiple computers
+HOST = "" # put your IP address here if playing on multiple computers
 BACKLOG = 2
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 server.bind((HOST,PORT))
@@ -14,24 +14,23 @@ print("looking for connection")
 def handleClient(client, serverChannel, cID, clientele):
   client.setblocking(1)
   msg = ""
+  command = ""
   while True:
       try:
-        msg += client.recv(30).decode("UTF-8")
-        command = msg.split("\t")
+        msg += client.recv(10).decode("UTF-8")
+        command = msg.split("\n")
         while (len(command) > 1):
           readyMsg = command[0]
-          msg = "\t".join(command[1:])
-          serverChannel.put(str(cID) + "\t" + readyMsg + '\t' + msg)
-          command = msg.split("\t")
+          msg = "\n".join(command[1:])
+          serverChannel.put(str(cID) + "\t" + readyMsg)
+          command = msg.split("\n")
       except:
-        # we failed
+        print("error")
         return
 def serverThread(clientele, serverChannel):
   global names
   while True:
       msg = serverChannel.get(True, None)
-      print("msg recv")
-      print(msg)
       msgSplit = msg.split('\t')
       senderID = msgSplit[0]
       msgNew = msgSplit[1] + '\t' + senderID + '\t' + msgSplit[2] + '\n'
@@ -41,7 +40,7 @@ def serverThread(clientele, serverChannel):
         for cID in clientele:
           if cID != senderID:
             clientele[cID].send(msgNew.encode())
-            print("> sent to %s:" % cID)
+            print("> sent to %s" % cID)
       print()
       serverChannel.task_done()
 clientele = dict()
