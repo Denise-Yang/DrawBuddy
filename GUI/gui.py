@@ -22,6 +22,7 @@ import zlib
 =======
 import io
 from svgParser import getData
+from filter import cropImage
 
 >>>>>>> 418e305cd39628279de9254c5faa1be44d074cd4
 
@@ -170,6 +171,7 @@ def vectorize(frame, file_name):
     base_path =path[:-3] + "vectorization/images"
     base_path1 =path[:-3] + "vectorization/results"
     input_path = os.path.join(base_path , file_name +'.jpg')
+    cropImage(input_path)
     output_path = os.path.join(base_path1 , file_name+'.svg')
     cv2.imwrite(input_path, frame)
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
@@ -292,11 +294,13 @@ def mainlooprun():
             drawing = svg2rlg(output_path)
             renderPM.drawToFile(drawing, file_name + ".png", fmt="PNG")
             image = IMG.open(file_name + ".png")
-            getData(output_path)
             image.thumbnail((500, 500))
             bio = io.BytesIO()
             image.save(bio, format="PNG")
+
             window['-IMAGE-'].update(data=bio.getvalue())
+            
+            getData(output_path)
             
         if event == 'Back' or event == 'Back0':
             window['-USER-'].update(visible = False)
