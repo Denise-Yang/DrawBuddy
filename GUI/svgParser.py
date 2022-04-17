@@ -49,8 +49,16 @@ def getData(fileName):
                 end = svgStr.find("Z")
 
                 startPath = svgStr[index:end]
-                #print(startPath)
+                transX = 0
+                transY = 0
+                if "transform" in svgStr:
+                    transLen = len("translate(")
+                    transformIndex = svgStr.find("translate(") + transLen
+                    transEndIndex = svgStr[transformIndex:].find(")") + transformIndex
+                    transform = svgStr[transformIndex:transEndIndex].split(",")
 
+                    transX = float(transform[0])
+                    transY = float(transform[1])
 
                 coordinates = startPath.split("C")
                 for coord in coordinates:
@@ -58,15 +66,18 @@ def getData(fileName):
 
                     if len(point) > 1:
                         x = point[4]
-                        y = point[5]
-                        pointsI.append((float(x),float(y)))
+                        y = point[5] 
+                        print("x: ", x)
+                        print("y: ", y)
+                        print()
+                        pointsI.append((float(x) + transX ,float(y) + transY))
                         #print(  x + ",", y)
 
      
                 #just do enpoints, could add additional chekcs to determine circle or non circle
                 points.append(pointsI[0])
                 points.append(pointsI[len(pointsI)-1])
-
+                paths.append(points)
                 
                 #filter points
                 """points.append(pointsI[0])
