@@ -67,11 +67,7 @@ def getData(fileName):
                     if len(point) > 1:
                         x = point[4]
                         y = point[5] 
-                        print("x: ", x)
-                        print("y: ", y)
-                        print()
                         pointsI.append((float(x) + transX ,float(y) + transY))
-                        #print(  x + ",", y)
 
      
                 #just do enpoints, could add additional chekcs to determine circle or non circle
