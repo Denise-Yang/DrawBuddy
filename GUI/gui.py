@@ -19,7 +19,8 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import zlib
 import io
-from svgParser import getData
+from svgParser import parseSVG
+from filter import cropImage
 
 
 isHost = False
@@ -31,7 +32,7 @@ PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "" # put your IP address here if playing on multiple computers
+HOST = "172.26.33.12" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -169,7 +170,9 @@ def vectorize(frame, file_name):
     base_path1 =path[:-3] + "vectorization/results"
     input_path = os.path.join(base_path , file_name +'.jpg')
     output_path = os.path.join(base_path1 , file_name+'.svg')
-    cv2.imwrite(input_path, frame)
+    cv2.imwrite(input_path, frame)    
+    cropImage(input_path)
+
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
 def mainlooprun():
@@ -290,11 +293,13 @@ def mainlooprun():
             drawing = svg2rlg(output_path)
             renderPM.drawToFile(drawing, file_name + ".png", fmt="PNG")
             image = IMG.open(file_name + ".png")
-            getData(output_path)
             image.thumbnail((500, 500))
             bio = io.BytesIO()
             image.save(bio, format="PNG")
+
             window['-IMAGE-'].update(data=bio.getvalue())
+            
+            parseSVG(output_path)
             
         if event == 'Back' or event == 'Back0':
             window['-USER-'].update(visible = False)
