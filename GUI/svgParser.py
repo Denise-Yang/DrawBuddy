@@ -38,7 +38,7 @@ def getTheta(points, i, prevIdx):
 
     return math.acos(dot/(mag0*mag1))
 
-def getData(fileName):            
+def parseSVG(fileName):            
     paths = []
     with open(fileName) as svgFile:
         for svgStr in svgFile:
