@@ -39,8 +39,9 @@ def cropImage(image_name):
     h, w, c = img.shape
     contourIm = img.copy()
     grayImage = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 170, 255, cv2.THRESH_BINARY)
+    (thresh, blackAndWhiteImage) = cv2.threshold(grayImage, 150, 255, cv2.THRESH_BINARY)
     #filter noise
+    
     kernel = np.ones((10,10),np.uint8)
     result = cv2.morphologyEx(blackAndWhiteImage, cv2.MORPH_CLOSE, kernel)
     contours, hierarchy  = cv2.findContours(result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -50,9 +51,8 @@ def cropImage(image_name):
     big_contour = max(contours, key=cv2.contourArea)
 
     cropped_im = resize(contourIm, big_contour, w, h)
-    #cv2.imshow("GRAY", cropped_im)
+    cv2.imshow("GRAY", blackAndWhiteImage)
     #cv2.waitKey(0)
-
-    return contours
+    return cropped_im
 
 
