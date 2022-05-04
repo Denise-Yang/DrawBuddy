@@ -1,4 +1,3 @@
-
 import cv2
 import os
 import subprocess
@@ -50,7 +49,6 @@ def display(graph, lineList, output_path, graph_width, graph_height, graphedLine
   
   figureIndex = lastFig + 1
   return graphedLines, figureIndex
-
 
 def groupLines(graph, x, y, graphedLines, figureIndex):
   drag_figures = graph.get_figures_at_location((x,y))
@@ -132,3 +130,26 @@ def vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex):
   #figureIndex = len(graphedLines) + 1
 
   return graphedLines, figureIndex
+
+
+def addGraphLines(graph, graphedLines, receivedGraphedLines, figureIndex):
+
+  minOriginalKey = min(graphedLines.keys())
+  maxOriginalKey = max(graphedLines.keys())
+  
+  minReceivedKey = min(receivedGraphedLines.keys())
+  maxReceivedKey = max(receivedGraphedLines.keys())
+
+  newFigureIndex = maxOriginalKey + 1
+
+  for fig in receivedGraphedLines.keys():
+    (endpoint0, endpoint1) = receivedGraphedLines[fig]
+    x0 = endpoint0[0]
+    y0 = endpoint0[1]
+    x1 = endpoint1[0]
+    y1 = endpoint1[1]
+    graph.draw_line((x0 , y0), (x1, y1), width=4)
+    graphedLines[newFigureIndex] = [endpoint0, endpoint1]
+    newFigureIndex += 1
+
+  return graphedLines, newFigureIndex
