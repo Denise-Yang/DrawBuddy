@@ -29,6 +29,7 @@ def display(graph, lineList, output_path, graph_width, graph_height, graphedLine
   heightProp = (float) (graph_height/height)
 
   #graphedLines = {}
+  lastFig = -1
   for line in lineList:
     x0, y0 = line[0]
     x1, y1 = line[1]
@@ -134,11 +135,10 @@ def vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex):
 
 def addGraphLines(graph, graphedLines, receivedGraphedLines, figureIndex):
 
-  minOriginalKey = min(graphedLines.keys())
-  maxOriginalKey = max(graphedLines.keys())
-  
-  minReceivedKey = min(receivedGraphedLines.keys())
-  maxReceivedKey = max(receivedGraphedLines.keys())
+  if len(graphedLines.keys()):
+    maxOriginalKey = max(graphedLines.keys())
+  else:
+    maxOriginalKey = max(receivedGraphedLines)
 
   newFigureIndex = maxOriginalKey + 1
 
