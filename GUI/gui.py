@@ -19,8 +19,10 @@ from svglib.svglib import svg2rlg
 from reportlab.graphics import renderPM
 import zlib
 import io
-from svgParser import parseSVG
+#from svgParser import parseSVG
 from filter import cropImage
+from display import vectorizeImage
+from display import groupLines
 
 
 isHost = False
@@ -96,7 +98,7 @@ def whiteboardLayout():
 
     code = "0" + str(PORT) if len(str(PORT)) == 4 else str(PORT)
 
-    left_col = [[sg.Text("Whiteboard"), sg.Button('Exit')],
+    left_col = [[sg.Text("Whiteboard "), sg.Button('Exit')],
                 [sg.Text(get_names(userList), key='-USERLIST-')],
                 [sg.Image(key="-IMAGE-")],
                 [sg.Graph(
@@ -120,7 +122,10 @@ def whiteboardLayout():
         [sg.Button('Send')],
         [sg.Button('Vectorize Image')],
         [sg.Image(key="-IMAGE_FEED-")],
-        [sg.Image(key="-VECTORIZE_IMAGE-")]]
+        [sg.Image(key="-VECTORIZE_IMAGE-")],
+        [sg.Button('Erase all', enable_events=True)],
+        [sg.Checkbox('Delete Lines', key = "-DELETELINES-", default=False)],
+        [sg.Checkbox('Group Lines', key = "-GROUPLINES-", default=False)]]
     
     layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
                sg.Column(camera_col, size = (400, 600), background_color = 'white')]]
@@ -128,10 +133,10 @@ def whiteboardLayout():
     return layout
 
 sz=(900,700)
-LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = True),
+LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = False),
             sg.Column(mkHostLayout(), key = '-HOST-', visible = False),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
-            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = False, background_color = 'white')]]
+            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = True, background_color = 'white')]]
 
 # takes frame and returns bytes of frame compatible with cv
 def get_bytes(frame):
@@ -156,24 +161,13 @@ def pil2cv(pil):
 
 def resize_image_signup(frame):
     framePIL = cv2pil(frame)
-    framePIL = framePIL.resize((200,150))
+    framePIL = framePIL.resize((250,200))
     return pil2cv(framePIL)
 
 def resize_image_home_page(frame):
     framePIL = cv2pil(frame)
     framePIL = framePIL.resize((300,200))
     return pil2cv(framePIL)
-
-def vectorize(frame, file_name):
-    path =  os.getcwd()
-    base_path =path[:-3] + "vectorization/images"
-    base_path1 =path[:-3] + "vectorization/results"
-    input_path = os.path.join(base_path , file_name +'.jpg')
-    output_path = os.path.join(base_path1 , file_name+'.svg')
-    cv2.imwrite(input_path, frame)    
-    cropImage(input_path)
-
-    convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
 def mainlooprun():
     global PORT
@@ -190,6 +184,14 @@ def mainlooprun():
     cap = cv2.VideoCapture(0)
     iterations = 0
     image_to_vectorize = None
+
+    dragging = False
+    graph = window["-GRAPH-"]  # type: sg.Graph
+    graph_size = (550, 675)
+    start_point = end_point = None
+    graphedLines = {}
+    figureIndex = None
+    graphedLines = {}
     
     while True:
         event, vals = window.read(timeout=10)
@@ -285,21 +287,102 @@ def mainlooprun():
             window['-WHITEBOARD-'].update(visible = True)
 
         if event == "Vectorize Image":
-            image_to_vectorize = frame
-            file_name =  'frame'
-            vectorize(frame, file_name)
-            base_path1 = os.getcwd()[:-3] + "vectorization/results"
-            output_path = os.path.join(base_path1 , file_name+'.svg')
-            drawing = svg2rlg(output_path)
-            renderPM.drawToFile(drawing, file_name + ".png", fmt="PNG")
-            image = IMG.open(file_name + ".png")
-            image.thumbnail((500, 500))
-            bio = io.BytesIO()
-            image.save(bio, format="PNG")
+            graphedLines, figureIndex = vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex)
 
-            window['-IMAGE-'].update(data=bio.getvalue())
+        ####### WHITEBOARD INTERACTION EVENTS ########
+        if event == "-GRAPH-": 
+            x, y = vals["-GRAPH-"]  
+            if vals["-GROUPLINES-"] == True:
+                graphedLines, figureIndex = groupLines(graph, x, y, graphedLines, figureIndex)
+                drag_figures = graph.get_figures_at_location((x,y))
+
+            if vals["-DELETELINES-"] == True:
+                drag_figures = graph.get_figures_at_location((x,y))
+                for fig in drag_figures:  
+                    (endpoint0, endpoint1) = graphedLines[fig]
+                    x0 = endpoint0[0]
+                    y0 = endpoint0[1]
+                    x1 = endpoint1[0]
+                    y1 = endpoint1[1]
+                    graphedLines.pop(fig)
+                    graph.delete_figure(fig)
+            else:
+                if not dragging:
+                    start_point = (x, y)
+                    dragging = True
+                    drag_figures = graph.get_figures_at_location((x,y))
+                    lastxy = x, y
+                else:
+                    end_point = (x, y)
+                
+                delta_x, delta_y = x - lastxy[0], y - lastxy[1]
+                lastxy = x,y
+
+                delete = []
+                for fig in drag_figures:  
+                    (endpoint0, endpoint1) = graphedLines[fig]
+                    x0 = endpoint0[0]
+                    y0 = endpoint0[1]
+                    x1 = endpoint1[0]
+                    y1 = endpoint1[1]
+
+                    newx0 = x0 + delta_x
+                    newy0 = y0 + delta_y
+                    newx1 = x1 + delta_x
+                    newy1 = y1 + delta_y
+
+                    x0diff = abs(x0 - x)
+                    y0diff = abs(y0 - y)
+                    x1diff = abs(x1 - x)
+                    y1diff = abs(y1 - y)
+
+                    rotating = False
+                    if(x0diff < 15 and y0diff < 15): # rotating endpoint0
+                        print("Rotating line: ", fig)
+                        graph.draw_line((newx0 , newy0), (x1, y1), width=4)
+                        rotating = True
+
+                        delete.append(fig)
+                        graphedLines[figureIndex] = [(newx0, newy0), (x1, y1)]
+                        figureIndex += 1
+                        graph.update()                
+                    elif(x1diff < 15 and y1diff < 15): # rotating endpoint1
+                        print("Rotating line: ", fig)
+                        graph.draw_line((x0 , y0), (newx1, newy1), width=4)
+                        rotating = True
+
+                        delete.append(fig)
+                        graphedLines[figureIndex] = [(x0, y0), (newx1, newy1)]
+                        figureIndex += 1
+                        graph.update()
+                    
+                    if not rotating:
+                        graph.move_figure(fig, delta_x, delta_y)
+                        graph.update()
+                        print("moving figure ", fig)
+                        graphedLines[fig] = [(newx0, newy0), (newx1, newy1)]
+
+                    print("----------------------")
+
+                for delFig in delete:
+                    graph.delete_figure(delFig)
+                    graphedLines.pop(delFig)
+
+                # update drag_figures
+                drag_figures = graph.get_figures_at_location((x,y))
             
-            parseSVG(output_path)
+
+        if event.endswith('+UP'):  # Drawing has ended because mouse up
+            start_point, end_point = None, None 
+            dragging = False
+            prior_rect = None
+
+        if event == "Erase all":
+            window['-GRAPH-'].erase()
+            graphedLines = {}
+            figureIndex = None
+
+         ####### END OF WHITEBOARD INTERACTION EVENTS ########
             
         if event == 'Back' or event == 'Back0':
             window['-USER-'].update(visible = False)
@@ -364,8 +447,8 @@ def mainlooprun():
             break
 
         window.refresh()
-
         iterations += 1
+        
     cap.release()
     window.close()
 
