@@ -124,18 +124,17 @@ def whiteboardLayout():
         [sg.Button('Send', visible=False, key='-SBUTTON-')],
         [sg.Button('Vectorize Image')],
         [sg.Text('Could Not Vectorize Image Try Again', visible=False, key='-ERROR1-')],
-        [sg.Image(key="-IMAGE_FEED-")],
-        [sg.Image(key="-VECTORIZE_IMAGE-")],
+        [sg.Image(key="-IMAGE_FEED-"), sg.Image(key="-VECTORIZE_IMAGE-")],
         [sg.Button('Erase All', enable_events=True)],
         [sg.Checkbox('Delete Lines', key='-DELETELINES-', default=False)],
         [sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False)]]
     
     layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
-               sg.Column(camera_col, size = (400, 600), background_color = 'white')]]
+               sg.Column(camera_col, size = (700, 600), background_color = 'white')]]
     
     return layout
 
-sz=(900,700)
+sz=(1300,700)
 LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = True),
             sg.Column(mkHostLayout(), key = '-HOST-', visible = False),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
@@ -238,7 +237,7 @@ def mainlooprun():
                     svg = base64.b64decode(msg[2])
                     svg = zlib.decompress(svg)
                     svg = svg.decode('UTF-8')
-                    receivedSVG.append(svg)
+                    receivedSVG.append(eval(svg))
                     vectors += 1
                     inbox.append('From: ' + userList[msg[1]] + ' at: ' + dt.now().strftime("%D-%H:%M:%S"))
                 if command == 'exit':
@@ -287,9 +286,8 @@ def mainlooprun():
                 window['-ERROR0-'].update(visible = True)
 
         if event == '-SBUTTON-':
-            path = os.getcwd()[:-3] + "vectorization/results/frame.svg"
-            f = open(path, 'r').read()
-            compressed = f.encode()
+            dict_send = str(graphedLines)
+            compressed = dict_send.encode()
             compressed = zlib.compress(compressed)
             compressed = base64.b64encode(compressed)
             compressed = str(compressed, 'utf-8')
@@ -315,8 +313,7 @@ def mainlooprun():
                 window['-ERROR1-'].update(visible=False)
                 graphedLines, figureIndex = vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex)
                 window['-SBUTTON-'].update(visible=True)            
-            except Exception as e:
-                print('error: ', e)
+            except:
                 window['-ERROR1-'].update(visible=True)
 
         if event == "-GRAPH-":
@@ -393,7 +390,7 @@ def mainlooprun():
             dragging = False
             prior_rect = None
 
-        if event == "Erase all":
+        if event == "Erase All":
             window['-GRAPH-'].erase()
             graphedLines = {}
             figureIndex = None
