@@ -23,6 +23,7 @@ import io
 from svgParser import parseSVG
 from display import vectorizeImage
 from display import groupLines
+from display import addGraphLines 
 
 isHost = False
 myID = ""
@@ -412,24 +413,24 @@ def mainlooprun():
             window['-FILENAME-'].update(visible=True)
             window['-SUB-'].update(visible=True)
             window['-USUB-'].update(visible=True)
-            ind = inbox.index(vals['-INBOX-'][0])
-            svg = receivedSVG.pop(ind)
-            path = os.getcwd()[:-3]
-            temp_name = str(time.time()).replace('.', '_')
-            path += 'GUI/' + temp_name + '.svg'
-            savedSVG = open(path, 'w')
-            savedSVG.write(svg)
-            drawing = svg2rlg(path)
-            renderPM.drawToFile(drawing, temp_name + ".png", fmt="PNG")
-            image = IMG.open(temp_name + ".png")
-            image.thumbnail((500, 500))
-            bio = io.BytesIO()
-            image.save(bio, format="PNG")
-            window['-VECTORIZE_IMAGE-'].update(data=bio.getvalue())
-            os.remove(temp_name + '.png')
-            os.remove(temp_name + '.svg')
-            window['-VECTORIZE_IMAGE-'].update(visible=True)
-            receivedSVG.insert(ind, svg)
+##            ind = inbox.index(vals['-INBOX-'][0])
+##            svg = receivedSVG.pop(ind)
+##            path = os.getcwd()[:-3]
+##            temp_name = str(time.time()).replace('.', '_')
+##            path += 'GUI/' + temp_name + '.svg'
+##            ## savedSVG = open(path, 'w')
+##            savedSVG.write(svg)
+##            drawing = svg2rlg(path)
+##            renderPM.drawToFile(drawing, temp_name + ".png", fmt="PNG")
+##            image = IMG.open(temp_name + ".png")
+##            image.thumbnail((500, 500))
+##            bio = io.BytesIO()
+##            image.save(bio, format="PNG")
+##            window['-VECTORIZE_IMAGE-'].update(data=bio.getvalue())
+##            os.remove(temp_name + '.png')
+##            os.remove(temp_name + '.svg')
+##            window['-VECTORIZE_IMAGE-'].update(visible=True)
+##            receivedSVG.insert(ind, svg)
         
         if event == '-SUB-':
             window['-REC-'].update(visible=True)
@@ -439,20 +440,21 @@ def mainlooprun():
             window['-VECTORIZE_IMAGE-'].update(visible=False)
             fname = vals['-FILENAME-']
             ind = inbox.index(vals['-INBOX-'][0])
-            svg = receivedSVG.pop(ind)
-            path =  os.getcwd()[:-3]
-            path += 'vectorization/results/' + fname + '.svg'
-            savedSVG = open(path, 'w')
-            savedSVG.write(svg)
-            drawing = svg2rlg(path)
-            renderPM.drawToFile(drawing, fname + ".png", fmt="PNG")
-            image = IMG.open(fname + ".png")
-            image.thumbnail((500, 500))
-            bio = io.BytesIO()
-            image.save(bio, format="PNG")
-            window['-IMAGE-'].update(data=bio.getvalue())
+            svg = receivedSVG.pop(ind) # graphedLines
+##            path =  os.getcwd()[:-3]
+##            path += 'vectorization/results/' + fname + '.svg'
+##            savedSVG = open(path, 'w')
+##            savedSVG.write(svg)
+##            drawing = svg2rlg(path)
+##            renderPM.drawToFile(drawing, fname + ".png", fmt="PNG")
+##            image = IMG.open(fname + ".png")
+##            image.thumbnail((500, 500))
+##            bio = io.BytesIO()
+##            image.save(bio, format="PNG")
+##            window['-IMAGE-'].update(data=bio.getvalue())
             vectors-=1
             inbox.pop(ind)
+            graphedLines, figureIndex = addGraphLines(graph, graphedLines, svg, figureIndex)
 
         if event == '-USUB-':
             window['-REC-'].update(visible=True)
