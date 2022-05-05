@@ -105,7 +105,6 @@ def vectorize(frame, file_name):
     base_path1 = path[:-3] + "vectorization/results"
     input_path = os.path.join(base_path , file_name +'.jpg')
     output_path = os.path.join(base_path1 , file_name+'.svg')
-    #cv2.imwrite(input_path, frame)
     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
 
@@ -115,7 +114,8 @@ def vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex):
   path = os.getcwd()
   base_path = path[:-3] + "vectorization/images"
   input_path = os.path.join(base_path , file_name + '.jpg')
-  cv2.imwrite(input_path, frame)
+  result = cropImage(input_path)
+  cv2.imwrite(input_path, result)
 
     # get lines using computer vision
   line_file_name, paths = getLines(file_name)

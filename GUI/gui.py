@@ -35,7 +35,7 @@ PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "172.26.18.95" # put your IP address here if playing on multiple computers
+HOST = "172.26.32.10" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -125,17 +125,18 @@ def whiteboardLayout():
         [sg.Button('Send', visible=False, key='-SBUTTON-')],
         [sg.Button('Vectorize Image')],
         [sg.Text('Could Not Vectorize Image Try Again', visible=False, key='-ERROR1-')],
-        [sg.Image(key="-IMAGE_FEED-"), sg.Image(key="-VECTORIZE_IMAGE-")],
+        [sg.Image(key="-IMAGE_FEED-")],
         [sg.Button('Erase All', enable_events=True)],
         [sg.Checkbox('Delete Lines', key='-DELETELINES-', default=False)],
         [sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False)]]
+
     
     layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
-               sg.Column(camera_col, size = (700, 600), background_color = 'white')]]
+               sg.Column(camera_col, size = (400, 600), background_color = 'white')]]
     
     return layout
 
-sz=(1300,700)
+sz=(900,750)
 LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = True),
             sg.Column(mkHostLayout(), key = '-HOST-', visible = False),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
@@ -171,17 +172,6 @@ def resize_image_home_page(frame):
     framePIL = cv2pil(frame)
     framePIL = framePIL.resize((300,200))
     return pil2cv(framePIL)
-
-# def vectorize(frame, file_name):
-#     path =  os.getcwd()
-#     base_path =path[:-3] + "vectorization/images"
-#     base_path1 =path[:-3] + "vectorization/results"
-#     input_path = os.path.join(base_path , file_name +'.jpg')
-#     output_path = os.path.join(base_path1 , file_name+'.svg')
-#     cv2.imwrite(input_path, frame)    
-#     cropImage(input_path)
-
-#     convert = subprocess.run("vtracer --input " + input_path + " --output " + output_path, shell =True)
 
 def mainlooprun():
     global PORT
@@ -314,7 +304,7 @@ def mainlooprun():
                 window['-ERROR1-'].update(visible=False)
                 graphedLines, figureIndex = vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex)
                 window['-SBUTTON-'].update(visible=True)            
-            except:
+            except
                 window['-ERROR1-'].update(visible=True)
 
         if event == "-GRAPH-":
@@ -413,24 +403,6 @@ def mainlooprun():
             window['-FILENAME-'].update(visible=True)
             window['-SUB-'].update(visible=True)
             window['-USUB-'].update(visible=True)
-##            ind = inbox.index(vals['-INBOX-'][0])
-##            svg = receivedSVG.pop(ind)
-##            path = os.getcwd()[:-3]
-##            temp_name = str(time.time()).replace('.', '_')
-##            path += 'GUI/' + temp_name + '.svg'
-##            ## savedSVG = open(path, 'w')
-##            savedSVG.write(svg)
-##            drawing = svg2rlg(path)
-##            renderPM.drawToFile(drawing, temp_name + ".png", fmt="PNG")
-##            image = IMG.open(temp_name + ".png")
-##            image.thumbnail((500, 500))
-##            bio = io.BytesIO()
-##            image.save(bio, format="PNG")
-##            window['-VECTORIZE_IMAGE-'].update(data=bio.getvalue())
-##            os.remove(temp_name + '.png')
-##            os.remove(temp_name + '.svg')
-##            window['-VECTORIZE_IMAGE-'].update(visible=True)
-##            receivedSVG.insert(ind, svg)
         
         if event == '-SUB-':
             window['-REC-'].update(visible=True)
@@ -441,17 +413,6 @@ def mainlooprun():
             fname = vals['-FILENAME-']
             ind = inbox.index(vals['-INBOX-'][0])
             svg = receivedSVG.pop(ind) # graphedLines
-##            path =  os.getcwd()[:-3]
-##            path += 'vectorization/results/' + fname + '.svg'
-##            savedSVG = open(path, 'w')
-##            savedSVG.write(svg)
-##            drawing = svg2rlg(path)
-##            renderPM.drawToFile(drawing, fname + ".png", fmt="PNG")
-##            image = IMG.open(fname + ".png")
-##            image.thumbnail((500, 500))
-##            bio = io.BytesIO()
-##            image.save(bio, format="PNG")
-##            window['-IMAGE-'].update(data=bio.getvalue())
             vectors-=1
             inbox.pop(ind)
             graphedLines, figureIndex = addGraphLines(graph, graphedLines, svg, figureIndex)
