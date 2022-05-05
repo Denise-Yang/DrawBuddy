@@ -114,8 +114,8 @@ def vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex):
   path = os.getcwd()
   base_path = path[:-3] + "vectorization/images"
   input_path = os.path.join(base_path , file_name + '.jpg')
-  cv2.imwrite(input_path, frame)
-  result = cropImage(input_path)
+  cv2.imwrite(input_path[:-5]+'.jpg', frame)
+  result = cropImage(input_path[:-5]+'.jpg')
   cv2.imwrite(input_path, result)
 
     # get lines using computer vision
