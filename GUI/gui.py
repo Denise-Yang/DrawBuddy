@@ -35,7 +35,7 @@ PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "172.26.32.10" # put your IP address here if playing on multiple computers
+HOST = "172.26.37.1" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -115,6 +115,7 @@ def whiteboardLayout():
     
     camera_col = [[sg.Text("Camera Feed")],        
         [sg.Text(code, key='-PORT-')],
+        [sg.Text("INBOX")],
         [sg.Button('Receive', key='-REC-', visible=False), 
          sg.Text("Vectors in Inbox: %s" % str(vectors), text_color='white', 
                  background_color='red', key='-MREC-', visible=False)],
@@ -126,13 +127,14 @@ def whiteboardLayout():
         [sg.Button('Vectorize Image')],
         [sg.Text('Could Not Vectorize Image Try Again', visible=False, key='-ERROR1-')],
         [sg.Image(key="-IMAGE_FEED-")],
+        [sg.Image(key="-VECTORIZE_IMAGE-")],
         [sg.Button('Erase All', enable_events=True)],
-        [sg.Checkbox('Delete Lines', key='-DELETELINES-', default=False)],
-        [sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False)]]
+        [sg.Checkbox('Delete Lines', key='-DELETELINES-', default=False)]]
+        #[sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False)]]
 
     
     layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
-               sg.Column(camera_col, size = (400, 600), background_color = 'white')]]
+               sg.Column(camera_col, size = (400, 675), background_color = 'white')]]
     
     return layout
 
