@@ -304,7 +304,7 @@ def mainlooprun():
                 window['-ERROR1-'].update(visible=False)
                 graphedLines, figureIndex = vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex)
                 window['-SBUTTON-'].update(visible=True)            
-            except
+            except:
                 window['-ERROR1-'].update(visible=True)
 
         if event == "-GRAPH-":
