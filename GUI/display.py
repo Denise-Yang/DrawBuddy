@@ -136,12 +136,16 @@ def vectorizeImage(frame, graph, graph_size, graphedLines, figureIndex):
 
 def addGraphLines(graph, graphedLines, receivedGraphedLines, figureIndex):
 
-  if len(graphedLines.keys()):
+  if (len(graphedLines.keys()) > 0):
     maxOriginalKey = max(graphedLines.keys())
   else:
+    if (len(receivedGraphedLines.keys()) == 0):
+      return graphedLines, figureIndex
     maxOriginalKey = max(receivedGraphedLines)
 
-  newFigureIndex = maxOriginalKey + 1
+  if (figureIndex == None):
+    figureIndex = -1
+  #newFigureIndex = figureIndex + 1
 
   for fig in receivedGraphedLines.keys():
     (endpoint0, endpoint1) = receivedGraphedLines[fig]
@@ -149,8 +153,16 @@ def addGraphLines(graph, graphedLines, receivedGraphedLines, figureIndex):
     y0 = endpoint0[1]
     x1 = endpoint1[0]
     y1 = endpoint1[1]
-    graph.draw_line((x0 , y0), (x1, y1), width=4)
-    graphedLines[newFigureIndex] = [endpoint0, endpoint1]
-    newFigureIndex += 1
+    
+    newline = graph.draw_line((x0 , y0), (x1, y1), width=4)
+    if newline not in graphedLines:
+      #print("GRAPHED LINES FOR FIGURE ", fig, ": ")
+      #print(graphedLines)
+      graphedLines[newline] = [(x0 , y0), (x1, y1)]
+      lastFig = newline
+  
+  figureIndex = newline + 1
 
-  return graphedLines, newFigureIndex
+    
+
+  return graphedLines, figureIndex
