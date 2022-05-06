@@ -41,5 +41,5 @@ def cropImage(image_name):
     #draw rectangle
     #contours = contours[0] if len(contours) == 2 else contours[1]
     big_contour = max(contours, key=cv2.contourArea)
-    cropped_im = resize(contourIm, big_contour, w, h)
+    cropped_im = resize(blackAndWhiteImage, big_contour, w, h)
     return cropped_im
