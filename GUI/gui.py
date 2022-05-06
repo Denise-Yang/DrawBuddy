@@ -35,7 +35,7 @@ PORT = random.randint(3456, 59897)
 def start_serv():
     os.system("python3 Server.py " + str(PORT))
 
-HOST = "172.26.37.1" # put your IP address here if playing on multiple computers
+HOST = "192.168.0.205" # put your IP address here if playing on multiple computers
 
 def handleServerMsg(server, serverMsg):
     server.setblocking(1)
@@ -100,8 +100,13 @@ def whiteboardLayout():
 
     code = "0" + str(PORT) if len(str(PORT)) == 4 else str(PORT)
 
-    left_col = [[sg.Text("Whiteboard"), sg.Button('Exit')],
-                [sg.Text(get_names(userList), key='-USERLIST-')],
+    left_col = [[sg.Button('Exit', button_color='red'), sg.Text("Whiteboard", font='Courier 22', 
+                    background_color='white', text_color='black', 
+                    size = (35, 1), justification='center')],
+                [sg.Text("Users: ", font='Courier', 
+                    background_color='white', text_color='black'), 
+                 sg.Text(get_names(userList), key='-USERLIST-',  font='Courier',
+                    background_color='white', text_color='black')],
                 [sg.Image(key="-IMAGE-")],
                 [sg.Graph(
                 canvas_size=(550, 675),
@@ -113,24 +118,33 @@ def whiteboardLayout():
                 drag_submits=True)]
     ]
     
-    camera_col = [[sg.Text("Camera Feed")],        
-        [sg.Text(code, key='-PORT-')],
-        [sg.Text("INBOX")],
-        [sg.Button('Receive', key='-REC-', visible=False), 
-         sg.Text("Vectors in Inbox: %s" % str(vectors), text_color='white', 
-                 background_color='red', key='-MREC-', visible=False)],
-        [sg.Listbox(inbox, auto_size_text=True, select_mode='single',visible=False, key='-INBOX-'), sg.Button('Save', visible=False, key='-SAVE-')],
+    camera_col = [        
+        [sg.Text("Access Code: ", font='Courier', 
+                    background_color='white', text_color='black'), 
+        sg.Text(code, key='-PORT-', font='Courier', 
+                    background_color='white', text_color='black')],
+        [sg.Text("INBOX", font='Courier', 
+                    background_color='lightblue', text_color='black',
+                    size = (35, 1), justification='center')],
+        [sg.Button('Receive Message', font='Courier', key='-REC-', visible=False), 
+         sg.Text("Messages in Inbox: %s" % str(vectors), text_color='white', font='Courier',
+                 background_color='red', key='-MREC-')],
+        [sg.Listbox(inbox, auto_size_text=True, select_mode='single', size = (40, 10), key='-INBOX-'), 
+        sg.Button('Save', visible=False, key='-SAVE-')],
         [sg.InputText(key='-FILENAME-', visible=False), 
          sg.Button('Submit', key='-SUB-', visible=False), 
          sg.Button('Back', key='-USUB-', visible=False)],
-        [sg.Button('Send', visible=False, key='-SBUTTON-')],
-        [sg.Button('Vectorize Image')],
+        [sg.Button('Send', font='Courier', visible=True, key='-SBUTTON-')],
         [sg.Text('Could Not Vectorize Image Try Again', visible=False, key='-ERROR1-')],
+        [sg.Text("Camera Feed", font='Courier', 
+                    background_color='lightblue', text_color='black',
+                    size = (35, 1), justification='center')],
         [sg.Image(key="-IMAGE_FEED-")],
         [sg.Image(key="-VECTORIZE_IMAGE-")],
-        [sg.Button('Erase All', enable_events=True)],
-        [sg.Checkbox('Delete Lines', key='-DELETELINES-', default=False)]]
-        #[sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False)]]
+        [sg.Button('Vectorize Image', font='Courier')],
+        [sg.Button('Erase All', enable_events=True, font='Courier')],
+        [sg.Checkbox('Delete Lines', font='Courier', key='-DELETELINES-', default=False)],
+        [sg.Checkbox('Group Lines', key='-GROUPLINES-', default=False, visible=False)]]
 
     
     layout = [[sg.Column(left_col, size = (550, 675), background_color = 'white'),
@@ -139,10 +153,10 @@ def whiteboardLayout():
     return layout
 
 sz=(900,750)
-LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = True),
+LAYOUTS = [[sg.Column(mkGreetLayout(), key = '-GREET-', visible = False),
             sg.Column(mkHostLayout(), key = '-HOST-', visible = False),
             sg.Column(mkUserLayout(), key = '-USER-', visible = False),
-            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = False, background_color = 'white')]]
+            sg.Column(whiteboardLayout(), key = '-WHITEBOARD-', visible = True, background_color = 'white')]]
 
 # takes frame and returns bytes of frame compatible with cv
 def get_bytes(frame):
@@ -248,7 +262,7 @@ def mainlooprun():
         window['-IMAGE_FEED-'].update(data = get_bytes(resize_image_home_page(frame)))
         window['-USERLIST-'].update(get_names(userList))
         window['-PORT-'].update(code)
-        window['-MREC-'].update("Vectors in Inbox: %s" % str(vectors))
+        window['-MREC-'].update("Messages in Inbox: %s" % str(vectors))
         
         if (len(receivedSVG) == 0):
             window['-REC-'].update(visible=False)
@@ -400,7 +414,7 @@ def mainlooprun():
             window['-INBOX-'].update(inbox)
             
         if event == '-SAVE-':
-            window['-INBOX-'].update(visible=False)
+            window['-INBOX-'].update(visible=True)
             window['-SAVE-'].update(visible=False)
             window['-FILENAME-'].update(visible=True)
             window['-SUB-'].update(visible=True)
